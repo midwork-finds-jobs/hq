@@ -17,16 +17,19 @@
     rustfmt = {
       enable = true;
       entry = "cargo fmt --all --check";
+      pass_filenames = false;
     };
 
     clippy = {
       enable = true;
       entry = "cargo clippy --all-targets --all-features -- -D warnings";
+      pass_filenames = false;
     };
 
     cargo-test = {
       enable = true;
       entry = "cargo test --all-features";
+      pass_filenames = false;
     };
   };
 }

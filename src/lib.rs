@@ -120,47 +120,46 @@ pub fn process_html(html: &str, config: &HqConfig) -> Result<String, Box<dyn Err
         let trimmed = result.trim();
 
         // Try direct parse first
-        let json_value = serde_json::from_str::<serde_json::Value>(trimmed)
-            .or_else(|_| {
-                // If it fails, try fixing malformed JSON by escaping control chars inside strings
-                let mut fixed = String::with_capacity(trimmed.len() * 2);
-                let mut in_string = false;
-                let mut escape_next = false;
+        let json_value = serde_json::from_str::<serde_json::Value>(trimmed).or_else(|_| {
+            // If it fails, try fixing malformed JSON by escaping control chars inside strings
+            let mut fixed = String::with_capacity(trimmed.len() * 2);
+            let mut in_string = false;
+            let mut escape_next = false;
 
-                for c in trimmed.chars() {
-                    if escape_next {
-                        fixed.push(c);
-                        escape_next = false;
-                        continue;
-                    }
-
-                    if c == '\\' {
-                        fixed.push(c);
-                        escape_next = true;
-                        continue;
-                    }
-
-                    if c == '"' {
-                        in_string = !in_string;
-                        fixed.push(c);
-                        continue;
-                    }
-
-                    // Only escape control characters when inside strings
-                    if in_string && c.is_control() {
-                        match c {
-                            '\n' => fixed.push_str("\\n"),
-                            '\r' => fixed.push_str("\\r"),
-                            '\t' => fixed.push_str("\\t"),
-                            _ => {} // Skip other control chars
-                        }
-                    } else {
-                        fixed.push(c);
-                    }
+            for c in trimmed.chars() {
+                if escape_next {
+                    fixed.push(c);
+                    escape_next = false;
+                    continue;
                 }
 
-                serde_json::from_str::<serde_json::Value>(&fixed)
-            });
+                if c == '\\' {
+                    fixed.push(c);
+                    escape_next = true;
+                    continue;
+                }
+
+                if c == '"' {
+                    in_string = !in_string;
+                    fixed.push(c);
+                    continue;
+                }
+
+                // Only escape control characters when inside strings
+                if in_string && c.is_control() {
+                    match c {
+                        '\n' => fixed.push_str("\\n"),
+                        '\r' => fixed.push_str("\\r"),
+                        '\t' => fixed.push_str("\\t"),
+                        _ => {} // Skip other control chars
+                    }
+                } else {
+                    fixed.push(c);
+                }
+            }
+
+            serde_json::from_str::<serde_json::Value>(&fixed)
+        });
 
         if let Ok(json_value) = json_value {
             // If it's valid JSON, serialize it compactly

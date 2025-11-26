@@ -1,8 +1,8 @@
 use aws_config::BehaviorVersion;
 use aws_sdk_s3::Client as S3Client;
 use flate2::read::GzDecoder;
-use hq::{process_html, HqConfig};
-use lambda_http::{run, service_fn, Body, Error, Request, RequestExt, Response, tracing};
+use hq::{HqConfig, process_html};
+use lambda_http::{Body, Error, Request, RequestExt, Response, run, service_fn, tracing};
 use serde_json::json;
 use std::io::Read;
 
@@ -67,9 +67,7 @@ async fn function_handler(event: Request, s3_client: &S3Client) -> Result<Respon
         .first("url")
         .ok_or("Missing 'url' query parameter")?;
 
-    let selector = query_params
-        .first("selector")
-        .unwrap_or(":root");
+    let selector = query_params.first("selector").unwrap_or(":root");
 
     let text_only = query_params
         .first("text")
