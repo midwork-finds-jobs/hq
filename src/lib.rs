@@ -1,3 +1,4 @@
+pub mod js_decode;
 pub mod link;
 pub mod pretty_print;
 
@@ -119,14 +120,20 @@ pub fn process_html(html: &str, config: &HqConfig) -> Result<String, Box<dyn Err
         // Try to parse as JSON first (trim whitespace before parsing)
         let trimmed = result.trim();
 
+        // Decode HTML entities first
+        let unescaped = match htmlescape::decode_html(trimmed) {
+            Ok(decoded) => decoded,
+            Err(_) => trimmed.to_string(),
+        };
+
         // Try direct parse first
-        let json_value = serde_json::from_str::<serde_json::Value>(trimmed).or_else(|_| {
+        let json_value = serde_json::from_str::<serde_json::Value>(&unescaped).or_else(|_| {
             // If it fails, try fixing malformed JSON by escaping control chars inside strings
-            let mut fixed = String::with_capacity(trimmed.len() * 2);
+            let mut fixed = String::with_capacity(unescaped.len() * 2);
             let mut in_string = false;
             let mut escape_next = false;
 
-            for c in trimmed.chars() {
+            for c in unescaped.chars() {
                 if escape_next {
                     fixed.push(c);
                     escape_next = false;
